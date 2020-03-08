@@ -9,19 +9,29 @@ struct knot
     vector<int> numb;
 };
 
-int index_of_max(knot noeds)
+int index_of_max(vector<int> numb)
 {
-    int max=noeds.numb[0], k=0;
-    for(int i=1;i<255;i++) 
-        if(max<noeds.numb[i]) k=i;
+    int max=numb[0], k=0;
+    for(int i=1; i<numb.size(); i++) 
+    {
+        if(max<numb[i]) 
+        {
+            max=numb[i];
+            k=i;
+        }
+    }
     return k; 
 }
 
-int index_of_min(knot noeds)
+int index_of_min(vector<int> numb)
 {
-    int k=index_of_max(noeds), min=noeds.numb[k];
-    for(int i=1;i<255;i++)  
-        if(min>noeds.numb[i] && noeds.numb[i]!=0) k=i;    
+    int k=index_of_max(numb), min=numb[k];
+    for(int i=1;i<numb.size();i++)  
+        if(min>numb[i] && numb[i]!=0) 
+        {
+            min=numb[i];
+            k=i;
+        }
     return k;
 }
 
@@ -36,6 +46,23 @@ void without_0(knot &noeds)
             n--;
             i--;
         }
+}
+
+void sort_vector(knot &noeds)
+{
+    knot nds2;
+    int n=noeds.numb.size(), k=0;
+    for(int i=0; i<n; i++)
+    {
+        k=index_of_min(noeds.numb);
+        nds2.numb.push_back(noeds.numb[k]);
+        nds2.symb.push_back(noeds.symb[k]);
+        noeds.numb.erase(noeds.numb.begin()+k);
+        noeds.symb.erase(noeds.symb.begin()+k);
+    }
+    noeds.numb=nds2.numb;
+    noeds.symb=nds2.symb;
+    for(int i=0; i<noeds.numb.size(); i++) cout<<noeds.numb[i]<<"    "<<noeds.symb[i]<<endl;
 }
 
 int main()
@@ -56,8 +83,9 @@ int main()
     }
     txt.close();
     without_0(noeds);
+    sort_vector(noeds);
     max_grade=j*8;
     //cout<<max_grade<<endl;
-    for(int i=0; i<noeds.numb.size(); i++) cout<<noeds.numb[i]<<"    "<<noeds.symb[i]<<endl;
+    //for(int i=0; i<noeds.numb.size(); i++) cout<<noeds.numb[i]<<"    "<<noeds.symb[i]<<endl;
     return 0;
 }
