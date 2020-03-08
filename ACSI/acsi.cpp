@@ -66,12 +66,12 @@ void sort_vector(knot &noeds)
 
 void create_tree(knot noeds)
 {
-    
+
 }
 
 int main()
 {
-    knot noeds;
+    knot noeds, tree;
     char symb;
     int j=0, k=0, max_grade;
     for(int i=0; i<255; i++) 
