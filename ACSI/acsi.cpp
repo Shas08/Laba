@@ -62,7 +62,11 @@ void sort_vector(knot &noeds)
     }
     noeds.numb=nds2.numb;
     noeds.symb=nds2.symb;
-    for(int i=0; i<noeds.numb.size(); i++) cout<<noeds.numb[i]<<"    "<<noeds.symb[i]<<endl;
+}
+
+void create_tree(knot noeds)
+{
+    
 }
 
 int main()
@@ -82,10 +86,9 @@ int main()
         j++;
     }
     txt.close();
+    max_grade=j*8;
     without_0(noeds);
     sort_vector(noeds);
-    max_grade=j*8;
-    //cout<<max_grade<<endl;
-    //for(int i=0; i<noeds.numb.size(); i++) cout<<noeds.numb[i]<<"    "<<noeds.symb[i]<<endl;
+    create_tree(noeds);
     return 0;
 }
