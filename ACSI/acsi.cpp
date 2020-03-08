@@ -19,7 +19,7 @@ int index_of_max(knot noeds)
 
 int index_of_min(knot noeds)
 {
-    int k=max(noeds), min=noeds.numb[k];
+    int k=index_of_max(noeds), min=noeds.numb[k];
     for(int i=1;i<255;i++)  
         if(min>noeds.numb[i] && noeds.numb[i]!=0) k=i;    
     return k;
@@ -27,12 +27,14 @@ int index_of_min(knot noeds)
 
 void without_0(knot &noeds)
 {
-    int n=noeds.numb.size();
-    for(int i=0; i<n; i++)
+    int n=noeds.numb.size(), i;
+    for(i=0; i<n; i++)
         if(noeds.numb[i]==0)
         {
-            noeds.numb.erase(i);
-            noeds.symb.erase(i);
+            noeds.numb.erase(noeds.numb.begin()+i);
+            noeds.symb.erase(noeds.symb.begin()+i);
+            n--;
+            i--;
         }
 }
 
@@ -53,9 +55,9 @@ int main()
         j++;
     }
     txt.close();
-
+    without_0(noeds);
     max_grade=j*8;
     //cout<<max_grade<<endl;
-    //for(int i=0; i<255; i++) cout<<noeds.numb[i]<<"    "<<noeds.symb[i]<<endl;
+    for(int i=0; i<noeds.numb.size(); i++) cout<<noeds.numb[i]<<"    "<<noeds.symb[i]<<endl;
     return 0;
 }
