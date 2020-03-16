@@ -7,6 +7,7 @@ struct knot
 {
     vector<char> symb;
     vector<int> numb;
+    vector<char> *array_of_pointers=new vector<char>;
 };
 
 int index_of_max(vector<int> numb)
@@ -48,7 +49,7 @@ void without_0(knot &noeds)
         }
 }
 
-void sort_vector(knot &noeds)
+void sort_knot(knot &noeds)
 {
     knot nds2;
     int n=noeds.numb.size(), k=0;
@@ -64,9 +65,16 @@ void sort_vector(knot &noeds)
     noeds.symb=nds2.symb;
 }
 
-void create_tree(knot noeds)
+void create_tree(knot noeds, knot &tree)
 {
+    knot tree=noeds;
+    for(int i=0, i<n-1, i++)
+    {
+        tree.numb.push_back(noeds.numb[0]+noeds.numb[1]);
+        tree.numb.erase(tree.numb.begin(), tree.numb.begin()+1);
+        sort_knot(tree);
 
+    }
 }
 
 int main()
@@ -88,7 +96,7 @@ int main()
     txt.close();
     max_grade=j*8;
     without_0(noeds);
-    sort_vector(noeds);
-    create_tree(noeds);
+    sort_knot(noeds);
+    create_tree(noeds, tree);
     return 0;
 }
