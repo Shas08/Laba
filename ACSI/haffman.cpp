@@ -9,20 +9,20 @@ using namespace std;
 class Uzel
 {
 public:
-	int key;
-	char s;
-	Uzel *left, *right;
-	Uzel() { left = NULL; right = NULL; }
-	Uzel(Uzel *l, Uzel *r)
+	int key;//кол-во повторений
+	char s;//символ
+	Uzel *left, *right;//ссылки на левого и правого потомков
+	Uzel() { left = NULL; right = NULL; }//констрктор по умолчанию
+	Uzel(Uzel *l, Uzel *r)//конструктор с известными потомками
 	{
 		left = l;
 		right = r;
-		key = l->key + r->key;
+		key = l->key + r->key;//при слиянии 2-ух символов, суммируется их кол-во повторений
 	}
 
 };
 
-struct Sort
+struct Sort//сравнивает 2 узла, если sort=1 то левый меньше правого и если 0, то наоборот
 {
 	bool operator()
 		(const Uzel* l, const Uzel* r)
@@ -31,160 +31,98 @@ struct Sort
 	}
 };
 
-vector<bool> code;
-vector<bool> ::iterator itr;
-map<char, vector<bool> > buf;
-map<char, vector<bool> > ::iterator it;
+vector<bool> code;//создаётся булев вектор для кодирования символа (для сжатия)
+map<char, vector<bool> > buf;//создаём мап из символа и соответствующего ему в дальнейшем кода
 
-void HafCode(Uzel *root) 
+void HafCode(Uzel *root) //функция кодирования
 {
-	if (root->left != NULL)
+	if (root->left != NULL)//проверяем наличие левого потомка
 	{
-		code.push_back(0);
-		HafCode(root->left); 
+		code.push_back(0);//когда идём влево добавляем в код символа 0
+		HafCode(root->left); //рекурсивно идём дальше
 	}
-	if (root->right != NULL) 
+	if (root->right != NULL) //проверяем наличие правого потомка
 	{
-		code.push_back(1);
-		HafCode(root->right);
+		code.push_back(1);//когда идём вправо добавляем в код символа 1
+		HafCode(root->right);//рекурсивно идём дальше
 	}
-	if (root->right == NULL && root->left == NULL)
-	{
-		buf[root->s] = code;
-		for (itr = code.begin(); itr != code.end(); itr++)
-			cout << *itr;
-		cout << endl;
-	}
-	if (!code.empty())
-	code.pop_back();
-
+	if (root->right == NULL && root->left == NULL)//если у узла нет потомков->узел содержит символ
+		buf[root->s] = code;//в мап соответствующего символа передаём получившийся код
+	if (!code.empty())//если вектор кода не пуст
+		code.pop_back();//удаляем последний элемент(чтобы исключить повторения кода с началом других кодов)
 }
 
-void HafDecode(Uzel *root)
+void HafDecode(Uzel *root)//ф-ция декодирования
 {
-	ifstream F("code.txt");  
-	ofstream g("output.txt");
-	Uzel *p = root; 
-	char byte;
-	int count = 0;
-	byte = F.get();
-	while (!F.eof())
+	ifstream F("code.txt");  //открываем файл для чтения(бинарник)
+	ofstream g("output.txt"); //открываем файл для записи(туда запишем декодированный текст)
+	Uzel *p = root;// создаём узел и присваеваем ему узел root
+	char byte;//создаём переменную, в которую будем считывать символы из файла F
+	int count = 0;//счётчик
+	byte = F.get();//считываем символ из файла F
+	while (!F.eof())//пока файл не закончится
 	{
-		bool b = byte & (1 << (7 - count)); 
-		if (b) 
-			p = p->right;
-		else
-			p = p->left; 
-		if (p->left == NULL && p->right == NULL)
+		bool b = byte & (1 << (7 - count));//символ представляется как набор 0 и 1(в char их 8)
+		if (b)//если 1 << (7 - count) цифра из 8 в нашем символе=1
+			p = p->right;//узел переходит в правого потомка так, как это было при кодировании
+		else//если 1 << (7 - count) цифра из 8 в нашем символе=0 
+			p = p->left;//узел переходит в левого потомка так, как это было при кодировании
+		if (p->left == NULL && p->right == NULL)//если мы дошли до листа дерева
 		{
-			cout << p->s;
-		g << p->s; 
-		p = root; 
+			g<<p->s;//записываем в файл символ хранящийся в данном листе дерева 
+			p=root;//возвращяемся к корню дерева 
 		}
-		count++;
-		if (count == 8)  
+		count++;//счётчик увеличивается
+		if (count == 8)//как только счётчик равен 8, char символ заканчивается и нужен следующий символ из файла
 		{ 
-			count = 0;
-			byte = F.get();  
+			count = 0;//обнуляем счётчик
+			byte = F.get();//считываем из файла новый символ
 		}
 	}
-	cout << endl;
-	F.close();
+	F.close();//закрываем файл по окончании
 }
 
-void print(Uzel *root, int k = 0)
-{
-	if (root != NULL)
-	{
-		print(root->right, k + 3);
-		for (int i = 0; i<k; i++)
-		{
-			cout << "  ";
-		}
-		if (root->s)
-			cout << root->key << " (" << root->s << ")" << endl;
-		else cout << root->key << endl;
-		print(root->left, k + 3);
-	}
-}
 int main()
 {
-	
-	//setlocale(LC_ALL, "Russian");
-
-	ifstream f("text.txt", ios::out | ios::binary);
-	map<char, int> m;
+	ifstream f("text.txt", ios::out | ios::binary);//открываем файл для чтения, который нужно закодировать
+	map<char, int> m;//создаём, мап символ и соответствующее число повторений
 	map<char, int> ::iterator ii;
-
-	while (!f.eof()) 
+	while (!f.eof()) //пока файл не закончился
 	{
-		char c = f.get();
-		m[c]++;
+		char c = f.get();//считываем символ из файла в переменную с
+		m[c]++;//число повторений этого символа увеличиваем
 	}
-
-
-	
-	for (ii = m.begin(); ii != m.end(); ii++)
-		cout << ii->first << ':' << ii->second << endl; 
-
-	list<Uzel*> L;
+	list<Uzel*> L;//создаём список узлов
 	list<Uzel*> ::iterator itr;
-	for (ii = m.begin(); ii != m.end(); ii++) 
+	for (ii = m.begin(); ii != m.end(); ii++) //от начала мапы до конца
 	{
-		Uzel* p = new Uzel; 
-		p->s = ii->first; 
-		p->key = ii->second; 
-		L.push_back(p);
+		Uzel* p = new Uzel;//создаём узел
+		p->s = ii->first;//в узел записываем символ соответствующий символу из мапы
+		p->key = ii->second;//аналогично в этот же узел записываем число повторений этого символа 
+		L.push_back(p);//заносим узел в список узлов
 	}
-
-	
-	cout << "vivod order" << endl;
-	for (itr = L.begin(); itr != L.end(); itr++)
-		cout << (*itr)->key << ':' << (*itr)->s << endl; 
-
-	cout << endl;
-	
-
-	while (L.size() != 1) 
+	while (L.size() != 1) //пока не построим дерево с единственным корнем
 	{
-		L.sort(Sort());
-		Uzel *Left = L.front(); 
-		L.pop_front(); 
-		Uzel *Right = L.front(); 
-		L.pop_front();
-		Uzel *pr = new Uzel(Left, Right); 
-		L.push_back(pr); 
+		L.sort(Sort());//сортируем список
+		Uzel *Left = L.front(); //левый потомок-первый узел списка
+		L.pop_front();//удаляем его из списка 
+		Uzel *Right = L.front();//правый потомок-первый узел нынешнего списка 
+		L.pop_front();//удаляем его из списка
+		Uzel *pr = new Uzel(Left, Right);//создаём новый узел с соответствующими левым и правым потомками
+		L.push_back(pr);//в конец списка добавляем получившийся узел (кол-во повторений=сумме повторений символов)
 	}
-
-	Uzel *root = L.front(); 
-	cout << "vivod dereva" << endl;
-	print(root);
-	cout << endl;
-	HafCode(root);
-
-	cout << "vivod coda" << endl;
-	f.clear(); f.seekg(0);
-	while (!f.eof())
-	{
-		char c = f.get();
-		vector<bool> x = buf[c];
-		for (int j = 0; j<x.size(); j++)
-			cout << x[j];
-		cout << "  ";
-	}
-	cout << endl;
-
-
-
-	f.clear(); f.seekg(0);
-	ofstream g("code.txt", ios::out | ios::binary);
+	Uzel *root = L.front();//корнем является единственный оставшийся узел в списке 
+	HafCode(root);//кодируем дерево(каждому символу составляем код из 0 и 1)
+	f.clear();//после чтения за концом файла, поток перейдет в ошибочное состояние, clear сбрасывает ошибки
+	f.seekg(0);//вернем позицию чтения в начало файла
+	ofstream g("code.txt", ios::out | ios::binary);//открываем файл для записи закодированного текста
 	char tx = 0;
 	int count = 0;
-	while (!f.eof())
+	while (!f.eof())//заполняем бинарник
 	{
-		char c = f.get();
-		vector<bool> x = buf[c]; 
-		for (int j = 0; j<x.size(); j++)
+		char c = f.get();//считываем символ из файла с текстом
+		vector<bool> x = buf[c];//булев вектор символа
+		for (int j = 0; j<x.size(); j++)//из булева вектора переводим в соответствующий символ
 		{
 			tx = tx | x[j] << (7 - count);
 			count++;
@@ -198,10 +136,8 @@ int main()
 		}
 
 	}
-
-	f.close();
-	g.close();
-
-	HafDecode(root);
-
+	f.close();//закрываем файл с текстом
+	g.close();//закрываем файл с бинарником
+	HafDecode(root);//декодируем дерево
+	return 0;
 }
