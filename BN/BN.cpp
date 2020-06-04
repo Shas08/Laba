@@ -26,13 +26,13 @@ class BigNumb
         BigNumb operator +=(Base c);
         BigNumb operator -(const BigNumb&);          //оператор вычитание +
         BigNumb operator -=(const BigNumb&);         //оператор -= +
-        BigNumb operator *(Base);                    //оператор умножение на базу ?
-        BigNumb operator *(BigNumb &b1);             //оператор умножение на большое число ?
-        BigNumb input_10();                               //10-ый ввод ?
-        void output_10();                                 //10-ый вывод ?
-        BigNumb operator /(Base);                    //оператор деление на базу ?
+        BigNumb operator *(Base);                    //оператор умножение на базу +!
+        BigNumb operator *(BigNumb &b1);             //оператор умножение на большое число +!
+        BigNumb input_10();                               //10-ый ввод +!
+        void output_10();                                 //10-ый вывод +!
+        BigNumb operator /(Base);                    //оператор деление на базу +!
         BigNumb operator /(BigNumb &b1);             //оператор деления на БЧ ?
-        Base operator %(Base c);
+        Base operator %(Base c);                     //остаток от деления +!
         //BigNumb operator %(BigNumb &b1);             //оператор остатка от деления на БЧ ?
         void cmp (const BigNumb&);                   //ф-ция сравнения больших чисел +
         void Len();                 //ф-ия вычисления кол-ва коэф +
@@ -79,6 +79,14 @@ class BigNumb
         }
 }; 
 
+BigNumb::BigNumb()
+{
+    lenMax=1;
+    len=lenMax;
+    coef=new Base;
+    coef[0]=0;
+}
+
 BigNumb BigNumb::input_10()
 {
     char *s=new char[1000];
@@ -92,7 +100,6 @@ BigNumb BigNumb::input_10()
         x=s[i]-'0';
         u=u*c+x;
     }
-    u.len=n;
     u.Len();
     return u;
 }
@@ -101,29 +108,21 @@ void BigNumb::output_10()
 {
     
     char *s=new char[1000];
-    BigNumb u=*this, b;
+    BigNumb u=*this, b; //b=0 для сравнения в цикле
     int n=0;
     Base x=0, c=10;
     for(int i=0; u!=b; i++)
     {
-        x=u%c;
-        s[i]=x+='0';
-        u=u/c;
+        x=u%c+'0';// из числа получаем символ
+        s[i]=x;// заносим его в массив
+        u=u/c;// делим на базу
     }
     n=strlen(s);
-    for(int i=n-1; i>=0; i--)
+    for(int i=n; i>=0; i--)
     {
         cout<<s[i];
     }
     cout<<endl;
-}
-
-BigNumb::BigNumb()
-{
-    lenMax=1;
-    len=lenMax;
-    coef=new Base;
-    coef[0]=0;
 }
 
 BigNumb::BigNumb(int t, int lM)
@@ -381,15 +380,14 @@ BigNumb BigNumb::operator *(BigNumb &b1)//Умножение БЧ на БЧ
 BigNumb BigNumb::operator/(Base b1)//Оператор деления на число
 {
     int j=0, n=len;//j-счётчик, n-длина БЧ
-    Base r=0, b=0;//r будет хранить остаток от деления коэф БЧ на число
-    b=~b;//b-максимальное число базы
+    Base r=0, b=Base_size;//r будет хранить остаток от деления коэф БЧ на число
     D_Base tmp=0;//tmp будет хранить результат объединения остатка(как старшего разряда) 
                  //и следующего коэф(как младшего)
                  //Пример: при делении 27 на 3 первый остаток равен 2, умножаем на 10, +7 и в tmp хранится 27
-    BigNumb div(0, n);//Создаём БЧ и зануляем
+    BigNumb div(0,n);//Создаём БЧ и зануляем
     for(;j<n; j++)//цикл деления
     {  
-        tmp=r*b+coef[n-1-j];//заносим результат объединения остатка(как старшего разряда) и следующего коэф(как младшего)
+        tmp=(r<<b)+coef[n-1-j];//заносим результат объединения остатка(как старшего разряда) и следующего коэф(как младшего)
         div.coef[n-1-j]=tmp/b1;//в результирующее БЧ в последний незаполненный коэф заносим результат 
                                //целочисленного деления на число
         r=tmp%b1;              //сохраняем остаток от деления
@@ -401,19 +399,32 @@ BigNumb BigNumb::operator/(Base b1)//Оператор деления на чис
 
 BigNumb BigNumb::operator /(BigNumb& b1) 
 {
-    BigNumb u=*this, u2, q, r;//u2 для увеличения u, q для частного, r для остатка
+    BigNumb u=*this;
+    if(u<b1)
+    {
+        BigNumb q(0,1);
+        return q;
+    }
+    else if(u==b1)
+    {
+        BigNumb q(0,1);
+        q.coef[0]|=1;
+        return q;
+    }//до этого момента всё верно
+    BigNumb u2, q, r;//u2 для увеличения u, q для частного, r для остатка
     int n=b1.len;//длина b1
     int m=len-n; //разница длин
-    cout<<m<<" "<<n<<" "<<len<<endl;
     q.coef=new Base[m+1]; q.len=m+1;//частное будет длины не больше m
     r.coef=new Base[n]; r.len=n;//остаток будет длины не больше n
     int j, k=0;//j-счётчик от D3-D7
-    D_Base b=(Base)~0+1;//65536
-    D_Base d=b/(b1.coef[n-1] + 1), qi=0, ri=0;//Для нормализации
-    cout<<d<<endl;
+    Base b=Base_size;
+    Base d=b/(b1.coef[n-1] + 1), qi=0, ri=0;//Для нормализации
     if(d!=1)
     {
-        u=u*d;//нормализуем
+        u2.coef=new Base[n+m+1]; u2.len=n+m+1;
+        u2=u*d;//нормализуем
+        u=u2;
+        delete u2.coef;
         b1=b1*d;//нормализуем
     }
     else
@@ -426,41 +437,42 @@ BigNumb BigNumb::operator /(BigNumb& b1)
     }
     for(j=m; j>=0; j--)//цикл от Д3-Д7
     {
-        qi=(u.coef[n+j]*b+u.coef[n+j-1])/b1.coef[n-1];//приблизительное частное(разряд)
-        ri=(u.coef[j+n]*b+u.coef[n+j-1])%b1.coef[n-1];//остаток
-        if((qi==b) || (qi*b1.coef[n-2]>(b*ri+u.coef[j+n-2])))
+        cout<<"!"<<endl;
+        cout<<u<<endl;//он почему то 0;
+        qi=((u.coef[j+n]*b)+u.coef[j+n-1])/b1.coef[n-1];//приблизительное частное(разряд)
+        cout<<"+"<<endl;
+        ri=((u.coef[j+n]*b)+u.coef[n+j-1])%b1.coef[n-1];//остаток
+        cout<<"?"<<endl;
+        if((qi==b) && (qi*b1.coef[n-2]>((ri<<b)+u.coef[j+n-2])))
         {
             qi--;
             ri=ri+b1.coef[n-1];
         }
         if(ri<b)
-           if((qi==b) || (qi*b1.coef[n-2]>(b*ri+u.coef[j+n-2])))
+           if((qi==b) && (qi*b1.coef[n-2]>((ri<<b)+u.coef[j+n-2])))
             {
                 qi--;
                 ri=ri+b1.coef[n-1];
             }
         u2=u2*0;
+        cout<<"+"<<endl;
         u2.coef=new Base[n];
         u2.len=n;
         for(int i=j; i<n+j; i++) u2.coef[i-j]=u.coef[i]; 
-        cout<<u2<<endl;
         u2.Len();
-        u2-=(b1*qi);
         if(u2<(b1*qi)) k=1;
         else k=0;
         q.coef[j]=qi;
         if(k==1) 
         {
             q.coef[j]--;
-            u2+=b1;
+            u2-=b1*(qi-(Base)1);
         }
         for(int i=0; i<n+1; i++) u.coef[i+j]=u2.coef[i];
     }
-    cout<<q<<endl;
     u=u/d;
     u.len=n;
     u.Len();
-    cout<<u<<endl;
     q.len=m+1;
     q.Len();
     return q;
@@ -469,17 +481,15 @@ BigNumb BigNumb::operator /(BigNumb& b1)
 Base BigNumb::operator %(Base c)
 {
     int j=0, n=len;//j-счётчик, n-длина БЧ
-    Base r=0, b=0;//r будет хранить остаток от деления коэф БЧ на число
-    b=~b;//b-максимальное число базы
+    D_Base r=0;//r будет хранить остаток от деления коэф БЧ на число
+    Base b=Base_size;
+    //b=~b;//b-максимальное число базы
     D_Base tmp=0;//tmp будет хранить результат объединения остатка(как старшего разряда) 
                  //и следующего коэф(как младшего)
                  //Пример: при делении 27 на 3 первый остаток равен 2, умножаем на 10, +7 и в tmp хранится 27
-    BigNumb div(0, n);//Создаём БЧ и зануляем
     for(;j<n; j++)//цикл деления
     {  
-        tmp=r*b+coef[n-1-j];//заносим результат объединения остатка(как старшего разряда) и следующего коэф(как младшего)
-        div.coef[n-1-j]=tmp/c;//в результирующее БЧ в последний незаполненный коэф заносим результат 
-                               //целочисленного деления на число
+        tmp=(r<<b)+coef[n-1-j];//заносим результат объединения остатка(как старшего разряда) и следующего коэф(как младшего)
         r=tmp%c;              //сохраняем остаток от деления
     }
     return r;//возвращаем большое число
@@ -512,12 +522,10 @@ BigNumb::~BigNumb()
 int main()
 {
     srand(unsigned(time(0)));
-    BigNumb b, b1, b2;
+    BigNumb b, b1;
     cin>>b;
     cin>>b1;
-    //b.input_10();
-    //b1.input_10();
-    b2=b/b1;
-    cout<<b2<<endl;
+    b=b/b1;
+    cout<<b<<endl;
     return 0;
 }
