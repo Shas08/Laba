@@ -92,7 +92,8 @@ int main()
 	g.write((char*)(&count), sizeof(count));										//записываем информацию о разновидностях символов и их частот
 	for (int i=0; i<256; i++) 
 	{
-		if (m[char(i)]>0) {
+		if (m[char(i)]>0) 
+		{
 			char c=char(i);
 			g.write((char*)(&c), sizeof(c));									//забивка символа
 			g.write((char*)(&m[char(i)]), sizeof(m[char(i)]));					//забивка значения символа
@@ -113,8 +114,8 @@ int main()
 			if (count == 8)
 			{ 
 				count = 0; 
-			g << tx;
-			tx = 0;
+				g << tx;
+				tx = 0;
 			}
 		}
 	}
