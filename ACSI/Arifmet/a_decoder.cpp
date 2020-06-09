@@ -34,13 +34,12 @@ int main()
     map <char, int> ::iterator ii;														//мапа для таблицы кодирования
 	// считывание из файла code.txt и декодирование
 	f.read((char*)&x1, sizeof(x1));												//считываем первое число для расшифровки таблциы																//отнимаем значение int
-	while (x1>0) 
+    while (x1>0) 
 	{
 		f.read((char*)&s, sizeof(s));											//считываем символ
 		f.read((char*)&x2, sizeof(x2));											//считываем его значение
 		x1-=40;																//отнимаем 8 бит символа и 32 его значения
-		m[s]=x2;																//строим таблицу
-        count+=x2;
+		m[s]=x2;                                                            //строим таблицу
     }
     list<Range> L;
     for(ii=m.begin(); ii!=m.end(); ii++)
@@ -62,36 +61,38 @@ int main()
         it->rb=it->lb+it->numb;
         i2++;
     }
-    x1=0;
-    int *l=new int[count], *h=new int[count], i=1, delitel=L.back().rb; 
-    l[0]=0; h[0]=65535;
-    int F_q=(h[0]+1)/4, Half=F_q*2, T_q=F_q*3;
-    short int value=f.get();
-    value=(value<<8) | f.get();
+    count=0;
+    int l=0, h=65535, delitel=L.back().rb; 
+    int F_q=(h+1)/4, Half=F_q*2, T_q=F_q*3;
+    int value=(f.get()<<8) | f.get();
+    char symbl=f.get();
     while(!f.eof())
     {
-        int freq=((value-l[i-1]+1)*delitel-1)/(h[i-1]-l[i-1]+1);
+        int freq=((value-l+1)*delitel-1)/(h-l+1);
         for(it=L.begin(); it->rb<=freq; it++);
-        l[i]=l[i-1]+(it->lb)*(h[i-1]-l[i-1]+1)/delitel;
-        h[i]=l[i-1]+(it->rb)*(h[i-1]-l[i-1]+1)/delitel-1;
+        int l2=l;
+        l=l+(it->lb)*(h-l+1)/delitel;
+        h=l2+(it->rb)*(h-l2+1)/delitel-1;
         for(;;)
         {
-            if(h[i]<Half);
-            else if(l[i]>=Half)
+            if(h<Half);
+            else if(l>=Half)
             {
-                l[i]-=Half; h[i]-=Half; value-=Half;
+                l-=Half; h-=Half; value-=Half;
             }
-            else if((l[i]>=F_q) && (h[i]<T_q))
+            else if((l>=F_q) && (h<T_q))
             {
-                l[i]-=F_q; h[i]-=F_q; value-=F_q;
+                l-=F_q; h-=F_q; value-=F_q;
             } else break;
-            l[i]+=l[i]; h[i]+=h[i]+1;
-            value+=value+((f.get()<<x1)>>7);
-            x1++;
-            if(x1!=8) f.seekg(ios_base::cur-1);
-            else x1=0;
+            l+=l; h+=h+1;
+            value+=value+( ( (short)symbl>>(7-count) ) & 1);
+            count++;
+            if(count == 8) 
+            {
+                symbl=f.get();
+                count=0;
+            }
         }
-        i++;
         g<<it->s;
     }
     f.close();

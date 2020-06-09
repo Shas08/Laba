@@ -72,12 +72,10 @@ int main()
 	}
     f.clear();//после чтения за концом файла, поток перейдет в ошибочное состояние, clear сбрасывает ошибки
 	f.seekg(0);//вернем позицию чтения в начало файла
-    int *l=new int[count], *h=new int[count], i=0, delitel=L.back().rb; 
-    l[0]=0; h[0]=65535;
-    int F_q=(h[0]+1)/4, Half=F_q*2, T_q=F_q*3, bits_to_follow=0;
+    int l=0, h=65535, i=0, delitel=L.back().rb; 
+    int F_q=(h+1)/4, Half=F_q*2, T_q=F_q*3, bits_to_follow=0;
     char tx=0;
     count=0;
-    cout<<"+"<<endl;
     while(!f.eof())
     {
         char c=f.get(); i++;
@@ -90,23 +88,44 @@ int main()
             cout<<"Error!"<<endl;
             break;
         }
-        l[i]=l[i-1]+it->lb*(h[i-1]-l[i-1]+1)/delitel;
-        h[i]=l[i-1]+it->rb*(h[i-1]-l[i-1]+1)/delitel-1;
+        int l2=l;
+        l=l+it->lb*(h-l+1)/delitel;
+        h=l2+it->rb*(h-l2+1)/delitel-1;
         for(;;)
         {
-            if(h[i]<Half)
+            if(h<Half)
             {
-                tx=tx | 0<<(7-count);
                 count++;
                 if(count==8)
                     {
-                        count = 0; 
+                        count = 0;
 				        g << tx;
 				        tx = 0;
                     }
                 for(; bits_to_follow>0; bits_to_follow--)
                 {
-                    tx=tx | 1<<(7-count);
+                    tx=tx | (1<<(7-count));
+                    count++;
+                    if(count==8)
+                    {
+                        count = 0;
+				        g << tx;
+				        tx = 0;
+                    }
+                }
+            }
+            else if(l>=Half)
+            {
+                tx=tx | (1<<(7-count));
+                count++;
+                if(count==8)
+                    {
+                        count = 0;
+				        g << tx;
+				        tx = 0;
+                    }
+                for(; bits_to_follow>0; bits_to_follow--)
+                {
                     count++;
                     if(count==8)
                     {
@@ -115,42 +134,21 @@ int main()
 				        tx = 0;
                     }
                 }
+                l-=Half;
+                h-=Half;
             }
-            else if(l[i]>=Half)
-            {
-                tx=tx | 1<<(7-count);
-                count++;
-                if(count==8)
-                    {
-                        count = 0; 
-				        g << tx;
-				        tx = 0;
-                    }
-                for(; bits_to_follow>0; bits_to_follow--)
-                {
-                    tx=tx | 0<<(7-count);
-                    count++;
-                    if(count==8)
-                    {
-                        count = 0; 
-				        g << tx;
-				        tx = 0;
-                    }
-                }
-                l[i]-=Half;
-                h[i]-=Half;
-            }
-            else if((l[i]>=F_q) && (h[i]<T_q))
+            else if((l>=F_q) && (h<T_q))
             {
                 bits_to_follow++;
-                l[i]-=F_q;
-                h[i]-=F_q;
+                l-=F_q;
+                h-=F_q;
             }
             else break;
-            l[i]+=l[i];
-            h[i]+=h[i]+1;
+            l+=l;
+            h+=h+1;
         }
     }
+    g<<tx;
     f.close();
     g.close();
     return 0;
