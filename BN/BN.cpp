@@ -31,8 +31,11 @@ class BigNumb
         BigNumb input_10();                               //10-ый ввод +!
         void output_10();                                 //10-ый вывод +!
         BigNumb operator /(Base);                    //оператор деление на базу +!
-        BigNumb operator /(BigNumb &b1);             //оператор деления на БЧ ?
-        Base operator %(Base c);                     //остаток от деления +!
+        int subBN(BigNumb &A, int i, int t);         //вычитание из части числа часть другого
+        void sumBN(BigNumb &A, int i);                //аналогично предыдущему сложение
+        BigNumb operator /(BigNumb &b1);             //оператор деления на БЧ +!
+        Base operator %(Base c);                     //остаток от деления на базу +!
+        BigNumb operator %(BigNumb &b1);             //остаток от деления на БЧ +!
         //BigNumb operator %(BigNumb &b1);             //оператор остатка от деления на БЧ ?
         void cmp (const BigNumb&);                   //ф-ция сравнения больших чисел +
         void Len();                 //ф-ия вычисления кол-ва коэф +
@@ -397,85 +400,115 @@ BigNumb BigNumb::operator/(Base b1)//Оператор деления на чис
     return div;//возвращаем большое число
 }
 
+int BigNumb::subBN(BigNumb &A, int i, int t) //аналогично для выситания бч, но только для частей
+{//Нужно для деления на бч
+    D_Base tmp = 0;
+    D_Base k = 0;
+    int j = i;
+    int l = 0;
+    while (j<=(i+t)) 
+    {
+        tmp = (D_Base) 1 << Base_size;
+        tmp += coef[j];
+        tmp -= A.coef[l] + k;
+        coef[j] = tmp;
+        k=!(tmp >> Base_size);
+        j++;
+        l++;
+    }
+    Len();
+    return k;
+}
+
+void BigNumb::sumBN(BigNumb &A, int i) //ф-ция компенсации сложением.
+{//Аналогично как со сложением, только для части БЧ.
+    int j = i;
+    int l = 0;
+    D_Base k = 0;
+    D_Base tmp;
+    while (j<=(i+A.len)) 
+    {
+        tmp = (D_Base) k + coef[j] + A.coef[l]; 
+        coef[j] = tmp;
+        k = tmp >> Base_size;
+        j++;
+        l++;
+    }
+    Len();
+}
+
 BigNumb BigNumb::operator /(BigNumb& b1) 
 {
-    BigNumb u=*this;
+    BigNumb u=*this;//u-копия делимого
+    BigNumb u2=*this;//u2-вторая копия
+    BigNumb q(0, len);//частное от деления
+    BigNumb v=b1;//копия делителя
+    int flag=0;// отвечает за то, был займ или нет
+    int m=len-b1.len; //разница длин
+    D_Base qi=0;//Для нормализации
+    Base b=Base_size;//2 байта
+    Base d=((D_Base)1 << b)/(b1.coef[b1.len-1] + 1);//нормализатор
     if(u<b1)
     {
-        BigNumb q(0,1);
+        q.Len();
+        return q;//если делимое меньше делителя, частное=0
+    }
+    else if(u==b1)//если оба БЧ равны, частное=1
+    {
+        q.coef[0]=1;
+        q.Len();
         return q;
     }
-    else if(u==b1)
+    if(d!=1)//Если нормализатор не равен 1, то нуэно умножить оба числа на нормализатор
     {
-        BigNumb q(0,1);
-        q.coef[0]|=1;
-        return q;
-    }//до этого момента всё верно
-    BigNumb u2, q, r;//u2 для увеличения u, q для частного, r для остатка
-    int n=b1.len;//длина b1
-    int m=len-n; //разница длин
-    q.coef=new Base[m+1]; q.len=m+1;//частное будет длины не больше m
-    r.coef=new Base[n]; r.len=n;//остаток будет длины не больше n
-    int j, k=0;//j-счётчик от D3-D7
-    Base b=Base_size;
-    Base d=b/(b1.coef[n-1] + 1), qi=0, ri=0;//Для нормализации
-    if(d!=1)
-    {
-        u2.coef=new Base[n+m+1]; u2.len=n+m+1;
-        u2=u*d;//нормализуем
-        u=u2;
-        delete u2.coef;
-        b1=b1*d;//нормализуем
+        u=u*d;
+        u2=u2*d;
+        v=b1*d;
     }
-    else
+    if(len==u.len)//Если после нормализации длины совпадают, нужно увеличить разряд у делимого
     {
-        u2.coef=new Base[n+m+1];//создаём новое бч, чтобы добавить нуль
-        u2+=u;//копируем значение исходного
-        u2.coef[n+m]=0;//добавляем нуль
-        u2.len=n+m+1;//увеличиваем длину
-        u=u2;//присваиваем u2 (len=n+m+1)
+        delete[] u.coef;
+        u.coef=new Base[u2.len+1];
+        u.lenMax++;
+        u.len++;
+        for(int i=0; i<u2.len; i++) u.coef[i]=u2.coef[i];
+        u.coef[u.len-1]=0;
     }
-    for(j=m; j>=0; j--)//цикл от Д3-Д7
+    int j=m, k=v.len;//j-для цикла, к-длина делителя
+    while(j>=0)//пока jне выйдет за 0
     {
-        cout<<"!"<<endl;
-        cout<<u<<endl;//он почему то 0;
-        qi=((u.coef[j+n]*b)+u.coef[j+n-1])/b1.coef[n-1];//приблизительное частное(разряд)
-        cout<<"+"<<endl;
-        ri=((u.coef[j+n]*b)+u.coef[n+j-1])%b1.coef[n-1];//остаток
-        cout<<"?"<<endl;
-        if((qi==b) && (qi*b1.coef[n-2]>((ri<<b)+u.coef[j+n-2])))
-        {
-            qi--;
-            ri=ri+b1.coef[n-1];
-        }
-        if(ri<b)
-           if((qi==b) && (qi*b1.coef[n-2]>((ri<<b)+u.coef[j+n-2])))
-            {
-                qi--;
-                ri=ri+b1.coef[n-1];
-            }
-        u2=u2*0;
-        cout<<"+"<<endl;
-        u2.coef=new Base[n];
-        u2.len=n;
-        for(int i=j; i<n+j; i++) u2.coef[i-j]=u.coef[i]; 
-        u2.Len();
-        if(u2<(b1*qi)) k=1;
-        else k=0;
+        if(u.coef[j+k]==v.coef[k-1]) qi=((D_Base)1<<b)-1;
+        else
+            qi=((D_Base)(u.coef[j+k]*((D_Base)1<<b))+u.coef[j+k-1])/v.coef[k-1];
+        while(qi*v.coef[k-2]>(u.coef[j+k]*((D_Base)1<<b)+u.coef[j+k-1]-qi*v.coef[k-1])*((D_Base)1<<b)+u.coef[j+k-2])
+        qi--;// где b*r'=u.coef[j+k]*((D_Base)1<<b)+u.coef[j+k-1]-qi*v.coef[k-1])*((D_Base)1<<b)
+        BigNumb v2=v;
+        int t=v.len;
+        v2=v*qi;
+        flag=u.subBN(v2, j, t);//делаем вычитание частей 2-ух бч.
         q.coef[j]=qi;
-        if(k==1) 
+        q.len++;
+        if(flag)//если был займ при вычитании
         {
-            q.coef[j]--;
-            u2-=b1*(qi-(Base)1);
+            u.sumBN(v, j);//компенсация сложением
+            q.coef[j]--;//коррекция q'
         }
-        for(int i=0; i<n+1; i++) u.coef[i+j]=u2.coef[i];
+        j--;
+        flag=0;//обнуляем флаг
     }
-    u=u/d;
-    u.len=n;
-    u.Len();
-    q.len=m+1;
-    q.Len();
+    q.Len();//убираем лишние нули впереди, если они есть.
     return q;
+}
+
+BigNumb BigNumb::operator %(BigNumb &b1) 
+{
+    BigNumb r;
+    BigNumb b;
+    b=*this/b1;
+    r=(b*b1);
+    r=*this-r;
+    r.Len();
+    return r;
 }
 
 Base BigNumb::operator %(Base c)
@@ -522,10 +555,41 @@ BigNumb::~BigNumb()
 int main()
 {
     srand(unsigned(time(0)));
-    BigNumb b, b1;
-    cin>>b;
-    cin>>b1;
-    b=b/b1;
-    cout<<b<<endl;
+    int M = 1000;
+    int T = 1000;
+    BigNumb F, E, C, R, D;
+    int n = rand() % M + 1;
+    int m = rand() % M + 1;
+    BigNumb A(1, n);
+    BigNumb B(1, n);
+    do 
+    {
+        n = rand() % M + 1;
+        m = rand() % M + 1;
+        BigNumb a(1, n), b(1, m);
+        A=a; B=b;
+        if (A > B) 
+        {
+            C = A / B;
+            cout<<"C= "<<C<<endl;
+            R = A % B;
+            F = C * B;
+            E = F + R;
+            D = A - R;
+        }
+        if (B > A) 
+        {
+            C = B / A;
+            cout<<"C= "<<C<<endl;
+            R = B % A;
+            F = C * A;
+            E = F + R;
+            D = B - R;
+        }
+        T--;
+        cout<< "T = ";
+        cout<<dec<<T;
+        cout<<endl;
+    } while (((A == E) && (D == F) && (B > R) && (T > 0)) || ((B == E) && (D == F) && (A > R) && (T > 0)));
     return 0;
 }
