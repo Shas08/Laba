@@ -109,19 +109,20 @@ BigNumb BigNumb::input_10()
 
 void BigNumb::output_10()
 {
-    
+    int i;
     char *s=new char[1000];
     BigNumb u=*this, b; //b=0 для сравнения в цикле
     int n=0;
     Base x=0, c=10;
-    for(int i=0; u!=b; i++)
+    for(i=0; u!=b; i++)
     {
         x=u%c+'0';// из числа получаем символ
         s[i]=x;// заносим его в массив
         u=u/c;// делим на базу
     }
+    s[i]='\0';
     n=strlen(s);
-    for(int i=n; i>=0; i--)
+    for(int i=n-1; i>=0; i--)
     {
         cout<<s[i];
     }
@@ -374,7 +375,7 @@ BigNumb BigNumb::operator *(BigNumb &b1)//Умножение БЧ на БЧ
         mul.coef[j+i]=tmp=k+mul.coef[j+i];//когда заканчивается массив коэф 1-го БЧ заносим остатки в след. коэф результирующего БЧ
         k=tmp>>Base_size;//Если есть остаток, то он в к
     }
-    mul.coef[j+i]=k+mul.coef[j+i];//в последний коэфициент заносим остаток, если тот есть 
+    //mul.coef[j+i]=k+mul.coef[j+i];//в последний коэфициент заносим остаток, если тот есть 
     mul.len=n+m;//задаём длину БЧ
     mul.Len();//вычисляем кол-во коэф
     return mul;//возвращаем БЧ
@@ -382,6 +383,11 @@ BigNumb BigNumb::operator *(BigNumb &b1)//Умножение БЧ на БЧ
 
 BigNumb BigNumb::operator/(Base b1)//Оператор деления на число
 {
+    if(b1 == 0)
+    {
+        cout<<"На 0 делить нельзя!"<<endl;
+        return *this;
+    }
     int j=0, n=len;//j-счётчик, n-длина БЧ
     Base r=0, b=Base_size;//r будет хранить остаток от деления коэф БЧ на число
     D_Base tmp=0;//tmp будет хранить результат объединения остатка(как старшего разряда) 
@@ -400,7 +406,7 @@ BigNumb BigNumb::operator/(Base b1)//Оператор деления на чис
     return div;//возвращаем большое число
 }
 
-int BigNumb::subBN(BigNumb &A, int i, int t) //аналогично для выситания бч, но только для частей
+int BigNumb::subBN(BigNumb &A, int i, int t) //аналогично для вычитания бч, но только для частей
 {//Нужно для деления на бч
     D_Base tmp = 0;
     D_Base k = 0;
@@ -439,13 +445,20 @@ void BigNumb::sumBN(BigNumb &A, int i) //ф-ция компенсации сло
 
 BigNumb BigNumb::operator /(BigNumb& b1) 
 {
+    BigNumb Null(0, 1);
+    if(b1 == Null)
+    {
+        cout<<"На 0 делить нельзя"<<endl;
+        return *this;
+    }
+    if(b1.len == 1) return *this;
     BigNumb u=*this;//u-копия делимого
     BigNumb u2=*this;//u2-вторая копия
     BigNumb q(0, len);//частное от деления
     BigNumb v=b1;//копия делителя
     int flag=0;// отвечает за то, был займ или нет
     int m=len-b1.len; //разница длин
-    D_Base qi=0;//Для нормализации
+    D_Base qi=0, ri=0;//Для нормализации
     Base b=Base_size;//2 байта
     Base d=((D_Base)1 << b)/(b1.coef[b1.len-1] + 1);//нормализатор
     if(u<b1)
@@ -475,13 +488,19 @@ BigNumb BigNumb::operator /(BigNumb& b1)
         u.coef[u.len-1]=0;
     }
     int j=m, k=v.len;//j-для цикла, к-длина делителя
-    while(j>=0)//пока jне выйдет за 0
+    while(j>=0)//пока j не выйдет за 0
     {
         if(u.coef[j+k]==v.coef[k-1]) qi=((D_Base)1<<b)-1;
         else
-            qi=((D_Base)(u.coef[j+k]*((D_Base)1<<b))+u.coef[j+k-1])/v.coef[k-1];
-        while(qi*v.coef[k-2]>(u.coef[j+k]*((D_Base)1<<b)+u.coef[j+k-1]-qi*v.coef[k-1])*((D_Base)1<<b)+u.coef[j+k-2])
-        qi--;// где b*r'=u.coef[j+k]*((D_Base)1<<b)+u.coef[j+k-1]-qi*v.coef[k-1])*((D_Base)1<<b)
+        {
+            qi=(((D_Base)(u.coef[j+k]<<b))+u.coef[j+k-1])/v.coef[k-1];
+            ri=(u.coef[j+k]<<b)+u.coef[j+k-1]-qi*v.coef[k-1];
+        }
+        while(qi*v.coef[k-2]>(ri<<b)+u.coef[j+k-2])
+        {
+            qi--;// где b*r'=u.coef[j+k]<<b)+u.coef[j+k-1]-qi*v.coef[k-1])<<b)
+            if(ri>=b) break;
+        }
         BigNumb v2=v;
         int t=v.len;
         v2=v*qi;
@@ -555,7 +574,14 @@ BigNumb::~BigNumb()
 int main()
 {
     srand(unsigned(time(0)));
-    int M = 1000;
+    BigNumb b, b1, b2;
+    cin>>b;
+    cin>>b1;
+    b2=b/b1;
+    cout<<b2<<endl;
+    b2=b%b1;
+    cout<<b2<<endl;
+    /*int M = 1000;
     int T = 1000;
     BigNumb F, E, C, R, D;
     int n = rand() % M + 1;
@@ -591,5 +617,5 @@ int main()
         cout<<dec<<T;
         cout<<endl;
     } while (((A == E) && (D == F) && (B > R) && (T > 0)) || ((B == E) && (D == F) && (A > R) && (T > 0)));
-    return 0;
+    */return 0;
 }
