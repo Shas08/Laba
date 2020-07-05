@@ -3,7 +3,7 @@
 #include <cstring>
 #include <cstdlib>
 #include <algorithm>
-using namespace std;
+using namespace std; //rasmer and proverki v delenii.
 
 typedef unsigned char BASE; // 8 бит 
 typedef unsigned short DBASE;
@@ -344,7 +344,7 @@ public:
     int subBN(BigNumber& A, int i, int t) {//вычитаем из части одного БЧ второе БЧ
         DBASE tmp = 0;
         DBASE k = 0;
-        int j = i;
+        int j = i;                              //      (u[j+n].......u[j])-(v[n-1],...,v[0])q
         int l = 0;
         int Len;
         if((i + t) > len){
@@ -403,9 +403,10 @@ public:
             copyA = A;
             if (d != 1) {
                 copyTHIS = copyTHIS.mul(d);             // Нормализуем
-                copyTHIS2 = copyTHIS2.mul(d);
                 copyA = A.mul(d);
+                copyTHIS2=copyTHIS;
             }
+            
             if (len == copyTHIS.len) {//если разрядность 1-ого БЧ не изменилась, добавляем нуль как старший коэф.
                 delete[] copyTHIS.number;
                 copyTHIS.number = new BASE[copyTHIS2.len + 1];//нам нужно увеличить разрядность
@@ -420,11 +421,8 @@ public:
             int k = copyA.len;
             while (j >= 0) {// вычисляем приблизительное частное
                 qz = (((DBASE)(copyTHIS.number[j + k] << sizeof(BASE) * 8)) + copyTHIS.number[j + k - 1]) / copyA.number[k - 1];
-             
                 while (qz * copyA.number[k - 2] > (copyTHIS.number[j + k] * ((DBASE)1 << sizeof(BASE) * 8) + copyTHIS.number[j + k - 1] - qz * copyA.number[k - 1]) * ((DBASE)1 << sizeof(BASE) * 8) + copyTHIS.number[j + k - 2]) {
-                     qz--;  
-                    
-                     
+                     qz--;
                 }// от самого старшего предположительного частного спускаемся до возможного частного
 
                 BigNumber copyA2;
@@ -579,7 +577,7 @@ int main() {
         B.change(m + 1);
         if (A > B) {
             C = A / B;
-            cout << C;
+            //cout << C;
             R = A % B;
             F = C * B;
             E = F + R;
@@ -587,7 +585,7 @@ int main() {
         }
         if (B > A) {
             C = B / A;
-            cout << C;
+            //cout << C;
             R = B % A;
             F = C * A;
             E = F + R;
@@ -595,7 +593,7 @@ int main() {
         }
         T--;
         cout << endl;
-        cout << "T = ";
+        //cout << "T = ";
         cout << dec << T;
         cout << endl;
     } while (((A == E) && (D == F) && (B > R) && (T > 0)) || ((B == E) && (D == F) && (A > R) && (T > 0)));
